@@ -11,14 +11,40 @@
     <script type="text/javascript">
         var playingTimeout; // Global variable to keep track of the timeout
         var stopRequested = false; // Global variable to track stop requests
-        var categories = {}; // Global variable to store categories
+        var words = []; // Global variable to store all available words
+        var wordSet = new Set();
 
-        // Load categories from JSON file
-        fetch('categories_files.json')
+        function normalizeWords(data) {
+            if (Array.isArray(data)) {
+                return data;
+            }
+            // Backward compatibility if old grouped JSON is present.
+            var flattened = [];
+            for (var key in data) {
+                if (Array.isArray(data[key])) {
+                    flattened = flattened.concat(data[key]);
+                }
+            }
+            return flattened;
+        }
+
+        // Load words from JSON file
+        fetch('words.json')
             .then(response => response.json())
             .then(data => {
-                categories = data;
-                populateCategoryMenus();
+                words = normalizeWords(data);
+                wordSet = new Set(words);
+                populateWordMenu();
+            })
+            .catch(function () {
+                // Fallback to legacy file name.
+                return fetch('categories_files.json')
+                    .then(response => response.json())
+                    .then(data => {
+                        words = normalizeWords(data);
+                        wordSet = new Set(words);
+                        populateWordMenu();
+                    });
             });
 
         // Play a single SiGML URL
@@ -58,16 +84,7 @@
 
         // Check if a gloss (file name) is valid
         function isValidGloss(gloss) {
-            var fileExists = false;
-            var request = new XMLHttpRequest();
-            request.open('HEAD', "sigml/" + gloss + ".sigml", false);
-            request.onload = function () {
-                if (request.status == 200) {
-                    fileExists = true;
-                }
-            };
-            request.send();
-            return fileExists;
+            return wordSet.has(gloss);
         }
 
         // Recursive function to play glosses sequentially
@@ -89,43 +106,33 @@
             clearTimeout(playingTimeout);
         }
 
-        // Populate category menus
-        function populateCategoryMenus() {
-            var categoriesDiv = document.getElementById("categories");
-            for (var category in categories) {
-                var select = document.createElement("select");
-                select.setAttribute("id", category);
-                var defaultOption = document.createElement("option");
-                defaultOption.value = "";
-                defaultOption.text = category;
-                select.appendChild(defaultOption);
-                categories[category].forEach(function (word) {
-                    var option = document.createElement("option");
-                    option.value = word;
-                    option.text = word;
-                    select.appendChild(option);
-                });
-                categoriesDiv.appendChild(select);
-                categoriesDiv.appendChild(document.createElement("br"));
-            }
+        // Populate a single menu that contains all words.
+        function populateWordMenu() {
+            var select = document.getElementById("wordSelect");
+            if (!select) return;
+            select.innerHTML = "";
+
+            var defaultOption = document.createElement("option");
+            defaultOption.value = "";
+            defaultOption.text = "اختر كلمة";
+            select.appendChild(defaultOption);
+
+            words.sort().forEach(function (word) {
+                var option = document.createElement("option");
+                option.value = word;
+                option.text = word;
+                select.appendChild(option);
+            });
         }
 
-        // Add selected words to the text input
-function addSelectedWords() {
-    var glossInput = document.getElementById("glossInput");
-    var selectedWords = [];
-    for (var category in categories) {
-        var select = document.getElementById(category);
-        for (var option of select.options) {
-            if (option.selected && option.value !== "") {
-                selectedWords.push(option.value);
-            }
+        // Add selected word to the text input sentence.
+        function addSelectedWord() {
+            var glossInput = document.getElementById("glossInput");
+            var select = document.getElementById("wordSelect");
+            if (!select || !select.value) return;
+            glossInput.value = (glossInput.value + " " + select.value).trim();
+            select.selectedIndex = 0;
         }
-        // Reset the selector
-        select.selectedIndex = 0;
-    }
-    glossInput.value = selectedWords.join(' ');
-}
 
     </script>
 </head>
@@ -147,8 +154,8 @@ function addSelectedWords() {
                     <button onclick="playGloss()">Sign</button>
                     <button onclick="resetGloss()">Reset</button>
 
-                    <div id="categories"></div>
-                    <button onclick="addSelectedWords()">Add Selected Words</button>
+                    <select id="wordSelect"></select>
+                    <button onclick="addSelectedWord()">Add Selected Word</button>
                 </td>
             </tr>
         </table>

@@ -16,13 +16,31 @@
 
         let playingTimeout;
         let stopRequested = false;
-        let categories = {};
+        let wordSet = new Set();
 
-        fetch('/categories_files.json')
+        function normalizeWords(data) {
+            if (Array.isArray(data)) return data;
+            const flattened = [];
+            for (const key in data) {
+                if (Array.isArray(data[key])) flattened.push(...data[key]);
+            }
+            return flattened;
+        }
+
+        fetch('/words.json')
             .then(r => r.json())
             .then(data => {
-                categories = data;
+                wordSet = new Set(normalizeWords(data));
                 postToParent({ type: 'ready' });
+            })
+            .catch(() => {
+                // Backward compatibility with old index file name.
+                return fetch('/categories_files.json')
+                    .then(r => r.json())
+                    .then(data => {
+                        wordSet = new Set(normalizeWords(data));
+                        postToParent({ type: 'ready' });
+                    });
             });
 
         function postToParent(msg) {
@@ -68,10 +86,7 @@
         }
 
         function isValidGloss(gloss) {
-            const req = new XMLHttpRequest();
-            req.open('HEAD', '/sigml/' + gloss + '.sigml', false);
-            req.send();
-            return req.status === 200;
+            return wordSet.has(gloss);
         }
 
         function playSequentially(glosses, index) {

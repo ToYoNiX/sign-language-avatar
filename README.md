@@ -11,10 +11,10 @@ A web-based system that translates Arabic text into Arabic Sign Language (ARSL) 
 The pipeline has three stages:
 
 **1. Input**
-The user types Arabic text into the web interface. A sliding-window algorithm matches each word (or phrase) against a built-in dictionary of ARSL words across categories: numbers, nouns, verbs, letters, adjectives, pronouns, adverbs, and miscellaneous.
+The user types Arabic text into the web interface. A sliding-window algorithm matches each word (or phrase) against a built-in flat dictionary of ARSL words.
 
 **2. Lookup**
-Each matched word maps to a [SiGML](https://vh.cmp.uea.ac.uk/index.php/SiGML) (Signing Gesture Markup Language) file. SiGML is an XML-based format derived from [HamNoSys](https://www.sign-lang.uni-hamburg.de/hamnosys.html) (Hamburg Notation System), a phonetic notation for sign languages. The dictionary index lives in `data/categories_files.json`; the SiGML files themselves live in `data/sigml/`.
+Each matched word maps to a [SiGML](https://vh.cmp.uea.ac.uk/index.php/SiGML) (Signing Gesture Markup Language) file. SiGML is an XML-based format derived from [HamNoSys](https://www.sign-lang.uni-hamburg.de/hamnosys.html) (Hamburg Notation System), a phonetic notation for sign languages. The dictionary index lives in `data/words.json` (and `data/categories_files.json` for compatibility); the SiGML files themselves live in `data/sigml/`.
 
 **3. Rendering**
 The [CWASA](https://vh.cmp.uea.ac.uk/index.php/CWA_Signing_Avatars) (CWA Signing Avatars) JavaScript library (`web-simulator/cwa/allcsa.js`) loads each SiGML file and drives a 3D avatar through the corresponding gesture sequence, playing one sign every ~1650 ms.
@@ -151,20 +151,20 @@ poetry run python -m pytest -v
 | Test file | What it covers |
 |-----------|---------------|
 | `tests/test_api.py` | FastAPI routes — `GET /`, `GET /avatar`, static assets, CORS headers, origin injection, 404 behaviour |
-| `tests/test_extractor.py` | `FileExtractor` — JSON, CSV wordlist, categories, statistics outputs, edge cases (empty source, single word) |
+| `tests/test_extractor.py` | `FileExtractor` — flat JSON word index, CSV wordlist, category/statistics outputs, edge cases (empty source, single word) |
 
 ---
 
 ## Data Utilities
 
-These scripts regenerate the processed data files from the raw SiGML source in `source-data/`.
+These scripts regenerate processed data files from `data/sigml/`.
 
 ```bash
 # Generate all output files
 make test_all
 
 # Or individually:
-make test_json        # data/categories_files.json
+make test_json        # data/categories_files.json (flat word list)
 make test_wordlist    # CSV word list
 make test_categories  # category breakdown
 make test_stat        # statistics
@@ -174,7 +174,7 @@ You can also call the script directly:
 
 ```bash
 cd tests
-python3 extract_data_word_list.py -s ../source-data -o output -a all
+python3 extract_data_word_list.py -s ../data/sigml -o output -a all
 ```
 
 ---
@@ -186,10 +186,10 @@ python3 extract_data_word_list.py -s ../source-data -o output -a all
 ├── templates/
 │   └── avatar.html             # Iframe-only avatar endpoint (served at /avatar)
 ├── data/
-│   ├── categories_files.json   # Word→SiGML index (loaded by the web app)
+│   ├── words.json              # Flat word index (loaded by the web app)
+│   ├── categories_files.json   # Flat word index (legacy filename)
 │   └── sigml/                  # SiGML animation files
-├── docs/                       # Documentation and screenshots
-├── source-data/                # Raw SiGML files organised by category
+├── sigml-reference.md          # SiGML reference
 ├── tests/
 │   └── extract_data_word_list.py
 ├── web-simulator/

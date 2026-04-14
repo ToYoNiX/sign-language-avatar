@@ -20,7 +20,7 @@ test:
 	poetry run python -m pytest
 docs:
 	epydoc -v --config epydoc.conf
-SOURCE=../source-data
+SOURCE=../data/sigml
 OUTPUT=output
 test_all:
 	# test generate all files to output

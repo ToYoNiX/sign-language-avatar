@@ -36,13 +36,12 @@ def output_dir(tmp_path):
 
 # --- JSON ---
 
-def test_json_contains_all_categories(simple_source, output_dir):
+def test_json_contains_all_words(simple_source, output_dir):
     fe = FileExtractor(simple_source, output_dir)
     fe.run("json")
     with open(os.path.join(output_dir, "categories_files.json"), encoding="utf-8") as f:
         data = json.load(f)
-    assert "أرقام" in data
-    assert "أفعال" in data
+    assert set(data) >= {"1", "2", "3", "يذهب", "يأكل"}
 
 
 def test_json_words_match_files(simple_source, output_dir):
@@ -50,8 +49,7 @@ def test_json_words_match_files(simple_source, output_dir):
     fe.run("json")
     with open(os.path.join(output_dir, "categories_files.json"), encoding="utf-8") as f:
         data = json.load(f)
-    assert set(data["أرقام"]) == {"1", "2", "3"}
-    assert set(data["أفعال"]) == {"يذهب", "يأكل"}
+    assert set(data) == {"1", "2", "3", "يذهب", "يأكل"}
 
 
 # --- Wordlist ---
@@ -130,7 +128,7 @@ def test_empty_source_produces_empty_json(tmp_path):
     fe.run("json")
     with open(os.path.join(out, "categories_files.json"), encoding="utf-8") as f:
         data = json.load(f)
-    assert data == {}
+    assert data == []
 
 
 def test_single_category_single_word(tmp_path):
@@ -142,4 +140,4 @@ def test_single_category_single_word(tmp_path):
     fe.run("json")
     with open(os.path.join(out, "categories_files.json"), encoding="utf-8") as f:
         data = json.load(f)
-    assert data == {"حروف": ["أ"]}
+    assert data == ["أ"]

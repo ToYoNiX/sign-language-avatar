@@ -72,7 +72,15 @@ def test_static_categories_json():
     resp = client.get("/categories_files.json")
     assert resp.status_code == 200
     data = resp.json()
-    assert isinstance(data, dict)
+    assert isinstance(data, list)
+    assert len(data) > 0
+
+
+def test_static_words_json():
+    resp = client.get("/words.json")
+    assert resp.status_code == 200
+    data = resp.json()
+    assert isinstance(data, list)
     assert len(data) > 0
 
 

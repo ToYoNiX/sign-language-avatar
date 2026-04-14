@@ -1,18 +1,18 @@
 """
-Script to extract filenames from a directory structure and save them in various formats.
+Script to extract SigML filenames and save them in various formats.
 
 Usage:
     python script.py -s <source_directory> -o <output_directory> -a <action>
 
 Arguments:
-    -s, --source    : Path to the source directory containing categorized subdirectories.
+    -s, --source    : Path to the source directory containing .sigml files.
     -o, --output    : Path to the output directory where results will be saved.
     -a, --action    : Action to perform, choose from:
                       - "all": Save all outputs (wordlist, categories, statistics, JSON).
                       - "wordlist": Save extracted filenames in CSV.
                       - "categories": Save category names in CSV.
                       - "statistics": Save word count statistics per category in CSV.
-                      - "json": Save category and word mappings in JSON.
+                      - "json": Save a flat words list in JSON.
 
 Example:
     python script.py -s ./data -o ./output -a all
@@ -34,22 +34,23 @@ class FileExtractor:
         self.wordlist = []
         self.categories = set()
         self.category_counts = {}
-        self.category_words = {}
+        self.words = set()
 
     def extract_file_names(self):
-        for category in os.listdir(self.base_dir):
-            category_path = os.path.join(self.base_dir, category)
-            if os.path.isdir(category_path):
+        for root, _, files in os.walk(self.base_dir):
+            rel = os.path.relpath(root, self.base_dir)
+            category = rel if rel != "." else "uncategorized"
+            local_count = 0
+            for file in files:
+                file_name, ext = os.path.splitext(file)
+                if ext.lower() != ".sigml":
+                    continue
+                self.wordlist.append((file_name, category))
+                self.words.add(file_name)
+                local_count += 1
+            if local_count > 0:
                 self.categories.add(category)
-                file_count = 0
-                words = []
-                for file in os.listdir(category_path):
-                    file_name, _ = os.path.splitext(file)
-                    self.wordlist.append((file_name, category))
-                    words.append(file_name)
-                    file_count += 1
-                self.category_counts[category] = file_count
-                self.category_words[category] = words
+                self.category_counts[category] = self.category_counts.get(category, 0) + local_count
 
     def save_wordlist(self):
         with open(self.wordlist_file, 'w', newline='', encoding='utf-8') as f:
@@ -73,7 +74,7 @@ class FileExtractor:
 
     def save_json(self):
         with open(self.json_file, 'w', encoding='utf-8') as f:
-            json.dump(self.category_words, f, indent=4, ensure_ascii=False)
+            json.dump(sorted(self.words), f, indent=2, ensure_ascii=False)
 
     def run(self, action):
         self.extract_file_names()
