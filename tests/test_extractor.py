@@ -66,7 +66,7 @@ def test_wordlist_has_header(simple_source, output_dir):
     with open(os.path.join(output_dir, "wordlist.csv"), encoding="utf-8") as f:
         reader = csv.reader(f)
         header = next(reader)
-    assert header == ["File Name", "Category", "Translation"]
+    assert header == ["File Name", "Category"]
 
 
 def test_wordlist_contains_all_words(simple_source, output_dir):

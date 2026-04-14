@@ -191,8 +191,6 @@ python3 extract_data_word_list.py -s ../source-data -o output -a all
 ├── source-data/                # Raw SiGML files organised by category
 ├── tests/
 │   └── extract_data_word_list.py
-├── tools/
-│   └── import_fr_sigml_to_arabic.py
 ├── web-simulator/
 │   ├── index.html              # Full standalone UI (served at /)
 │   ├── cwa/
