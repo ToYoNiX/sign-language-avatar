@@ -19,18 +19,64 @@ Multiple `<hns_sign>` blocks inside one `<sigml>` play sequentially.
 
 ---
 
+## Element ordering
+
+**Order matters.** CWASA parses elements top-to-bottom and builds the pose incrementally. The correct order inside `<hamnosys_manual>` is:
+
+```
+[symmetry]  →  hand shape  →  thumb modifier  →  finger direction  →  palm orientation  →  location  →  [contact]  →  movement  →  [movement modifier]  →  [repeat]
+```
+
+Getting this wrong produces no visible error — the avatar either does nothing or falls back to the idle pose.
+
+---
+
 ## Minimal working example
+
+Based directly on a real sign from the dictionary (`1.sigml` — the number 1):
 
 ```xml
 <sigml>
-  <hns_sign gloss="hello">
+  <hns_sign gloss="1">
     <hamnosys_nonmanual></hamnosys_nonmanual>
     <hamnosys_manual>
-      <hamflathand/>
-      <hampalmu/>
-      <hamneutralspace/>
-      <hamsymmlr/>
-      <hammoveu/>
+      <hamfist/>
+      <hamthumboutmod/>
+      <hamextfingero/>
+      <hampalml/>
+      <hamshouldertop/>
+      <hammoveo/>
+      <hamsmallmod/>
+    </hamnosys_manual>
+  </hns_sign>
+</sigml>
+```
+
+Two-handed mirror example (number 6 — `6.sigml`):
+
+```xml
+<sigml>
+  <hns_sign gloss="6">
+    <hamnosys_nonmanual></hamnosys_nonmanual>
+    <hamnosys_manual>
+      <hamparbegin/>
+        <hamfist/>
+        <hamthumboutmod/>
+        <hamextfingero/>
+        <hampalml/>
+      <hamplus/>
+        <hamfinger2345/>
+        <hamthumboutmod/>
+        <hamextfingeru/>
+        <hampalmd/>
+      <hamparend/>
+      <hamparbegin/>
+        <hamshoulders/>
+        <hamlrat/>
+      <hamplus/>
+        <hamlrat/>
+        <hamshoulders/>
+      <hamparend/>
     </hamnosys_manual>
   </hns_sign>
 </sigml>
@@ -260,9 +306,11 @@ Examples: `<hamcircleu/>`, `<hamcircleol/>`
 | Element | Meaning |
 |---|---|
 | `<hamparbegin/>` / `<hamparend/>` | Parallel (simultaneous) block |
+| `<hamplus/>` | Separator between two simultaneous elements inside a `<hamparbegin>` block |
 | `<hamseqbegin/>` / `<hamseqend/>` | Sequential block |
 | `<hamaltbegin/>` / `<hamaltend/>` | Alternating block |
 | `<hamfusionbegin/>` / `<hamfusionend/>` | Fusion (blended transition) block |
+| `<hamreplace/>` | Replace the current hand shape / orientation mid-sign (transition to next pose) |
 | `<hamrest/>` | Rest pose |
 
 ---
