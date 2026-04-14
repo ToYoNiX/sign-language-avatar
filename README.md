@@ -183,26 +183,37 @@ python3 extract_data_word_list.py -s ../data/sigml -o output -a all
 
 ```
 .
+├── app.py                      # FastAPI server
 ├── templates/
-│   └── avatar.html             # Iframe-only avatar endpoint (served at /avatar)
-├── data/
-│   ├── words.json              # Flat word index (loaded by the web app)
-│   ├── categories_files.json   # Flat word index (legacy filename)
-│   └── sigml/                  # SiGML animation files
-├── sigml-reference.md          # SiGML reference
-├── tests/
-│   └── extract_data_word_list.py
+│   ├── avatar.html             # Iframe-only avatar endpoint (served at /avatar)
+│   └── playground.html         # SiGML playground page (served at /playground)
 ├── web-simulator/
 │   ├── index.html              # Full standalone UI (served at /)
+│   ├── sigml/                  # Runtime SiGML files used by the simulator
+│   ├── words.json              # Flat word index used by the UI
+│   ├── categories_files.json   # Flat word index (legacy filename)
 │   ├── cwa/
 │   │   ├── allcsa.js           # CWASA avatar rendering library
 │   │   └── cwacfg.json         # Avatar list and renderer config
 │   ├── avatars/                # 3D avatar models (JAR files)
-│   └── shaders/
-├── app.py                      # FastAPI server
+│   ├── shaders/
+│   ├── cwaclientcfg.json       # CWASA client config
+│   ├── h2s.xsl                 # HamNoSys-to-SiGML transform helpers
+│   └── favicon.svg
+├── data/
+│   ├── sigml/                  # Canonical flat SiGML dataset
+│   ├── words.json              # Canonical flat word index
+│   └── categories_files.json   # Flat word index (legacy filename)
+├── tests/
+│   ├── test_api.py
+│   ├── test_extractor.py
+│   └── extract_data_word_list.py
+├── sigml-reference.md          # SiGML reference
+├── CREDITS
 ├── .env                        # Local env vars (not committed)
 ├── .env.example                # Env var template
 ├── Makefile
+├── poetry.lock
 ├── pyproject.toml
 └── LICENSE                     # CC BY-NC-4.0
 ```
