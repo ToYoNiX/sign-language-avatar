@@ -1,117 +1,130 @@
-# Algerian Sign Language 3D-Avatar
+# Arabic Sign Language Avatar
 
-## Overview
-This project is an **Automated Arabic Algerian Sign Language (ALSL) Translation System** that utilizes **3D avatar technology** to translate Arabic text into dynamic ALSL gestures. The system is designed to improve accessibility and communication for the **deaf community** in Algeria. 
+A web-based system that translates Arabic text into Arabic Sign Language (ARSL) animations rendered by a 3D avatar in real time.
 
-The translation engine relies on:
-- **HamNoSys (Hamburg Notation System)** for encoding ALSL gestures.
-- **SiGML (Signing Gesture Markup Language)** for generating animated sign language.
-- **CWASA (CWA Signing Avatars)** for rendering the 3D avatar’s sign language animations.
+> This is a fork of [linuxscout/algerianSignLanguage-avatar](https://github.com/linuxscout/algerianSignLanguage-avatar).
 
-The system currently supports a dictionary of **417 ALSL words** with a certified accuracy rate of **75.53%**.
+---
 
-## Features
-✅ **Real-time ALSL translation** from Arabic text to 3D avatar gestures.  
-✅ **Lexicon of ALSL gestures**, built using HamNoSys and validated by sign language experts.  
-✅ **Web-based interface** for accessibility and ease of use.  
-✅ **Integration with CWASA avatar rendering** for accurate sign representation.  
+## How It Works
 
-## Live Demo 🖥️
-Try the **Algerian Sign Language 3D avatar** here:  
-🔗 [3D ALSL Demo](https://3dasl-avatar.vercel.app/)
+The pipeline has three stages:
 
-## Project Structure
+**1. Input**
+The user types Arabic text into the web interface. A sliding-window algorithm matches each word (or phrase) against a built-in dictionary of ARSL words across categories: numbers, nouns, verbs, letters, adjectives, pronouns, adverbs, and miscellaneous.
+
+**2. Lookup**
+Each matched word maps to a [SiGML](https://vh.cmp.uea.ac.uk/index.php/SiGML) (Signing Gesture Markup Language) file. SiGML is an XML-based format derived from [HamNoSys](https://www.sign-lang.uni-hamburg.de/hamnosys.html) (Hamburg Notation System), a phonetic notation for sign languages. The dictionary index lives in `data/categories_files.json`; the SiGML files themselves live in `data/sigml/`.
+
+**3. Rendering**
+The [CWASA](https://vh.cmp.uea.ac.uk/index.php/CWA_Signing_Avatars) (CWA Signing Avatars) JavaScript library (`web-simulator/cwa/allcsa.js`) loads each SiGML file and drives a 3D avatar through the corresponding gesture sequence, playing one sign every ~1650 ms.
+
 ```
-.
-├── data
-│   ├── categories_files.json
-│   └── sigml/ (Contains SiGML files for ALSL words)
-├── docs
-│   ├── images/ (Project-related images and screenshots)
-│   ├── asl-3d-avatar-master-memory.pdf (Master thesis documentation)
-│   ├── NAFATH-4th-ID-141-ALSL2024.pdf (Research paper)
-├── source-data
-│   ├── words.ods (Dataset containing ALSL words)
-│   ├── [Various categories of SiGML files]
-├── tests
-│   ├── extract_data_word_list.py (Script for extracting word lists)
-│   ├── output/ (Generated test data)
-├── tools
-│   ├── import_fr_sigml_to_arabic.py (Script for importing French Sign Language to Arabic Sign Language)
-├── web-simulator
-│   ├── avatars/ (3D avatar models)
-│   ├── index.html (Web interface for testing the system)
-│   ├── shaders/ (Rendering scripts)
-└── README.md
+Arabic text  →  word lookup  →  SiGML files  →  CWASA renderer  →  3D avatar animation
 ```
 
-## Installation & Setup 🚀
-### Prerequisites
-- Python (for preprocessing scripts)
-- Web browser (for running the simulator)
+---
 
-### Running the Web Simulator
+## Requirements
+
+| Requirement | Notes |
+|-------------|-------|
+| Python 3.7+ | Only used to serve static files; no pip packages needed |
+| A modern web browser | Chrome, Firefox, Safari, or Edge |
+
+The web interface is pure HTML/CSS/JavaScript with no build step. The CWASA rendering library is bundled in the repo (`web-simulator/cwa/allcsa.js`).
+
+The Python utility scripts in `tests/` and `tools/` also use only the standard library (`os`, `sys`, `csv`, `json`, `argparse`).
+
+---
+
+## Running Locally
+
+### With Poetry (recommended)
+
+[Poetry](https://python-poetry.org/) manages the Python environment and pins the interpreter version.
+
+```bash
+# Install Poetry if you don't have it
+curl -sSL https://install.python-poetry.org | python3 -
+
+# Install the project (creates a virtual env, nothing to download)
+poetry install
+
+# Serve the web interface
+cd web-simulator
+poetry run python3 -m http.server 8000
+```
+
+### Without Poetry
+
 ```bash
 cd web-simulator
-python -m http.server 8000
-```
-Then, open your browser and visit:
-```
-http://localhost:8000
+python3 -m http.server 8000
 ```
 
-## Screenshots 📸
-![UI Preview](docs/images/sui.png)
+Then open [http://localhost:8000](http://localhost:8000) in your browser.
 
-## Resources & Links 🔗
-- [Algerian Sign Language (FaceBook page)](https://www.facebook.com/profile.php?id=100093996740140)
-- [DictaSign Project](https://www.sign-lang.uni-hamburg.de/dicta-sign/portal/concepts/concepts_fre.html)
+---
+
+## Data Utilities
+
+These scripts regenerate the processed data files from the raw SiGML source in `source-data/`.
+
+```bash
+# Generate all output files
+make test_all
+
+# Or individually:
+make test_json        # data/categories_files.json
+make test_wordlist    # CSV word list
+make test_categories  # category breakdown
+make test_stat        # statistics
+```
+
+You can also call the script directly:
+
+```bash
+cd tests
+python3 extract_data_word_list.py -s ../source-data -o output -a all
+```
+
+---
+
+## Project Structure
+
+```
+.
+├── data/
+│   ├── categories_files.json   # Word→SiGML index (loaded by the web app)
+│   └── sigml/                  # SiGML animation files
+├── docs/                       # Documentation and screenshots
+├── source-data/                # Raw SiGML files organised by category
+├── tests/
+│   └── extract_data_word_list.py
+├── tools/
+│   └── import_fr_sigml_to_arabic.py
+├── web-simulator/
+│   ├── index.html              # Main web interface
+│   ├── cwa/
+│   │   ├── allcsa.js           # CWASA avatar rendering library
+│   │   └── cwacfg.json         # Avatar list and renderer config
+│   ├── avatars/                # 3D avatar models (JAR files)
+│   └── shaders/
+├── Makefile
+├── pyproject.toml
+└── LICENSE                     # CC BY-NC-4.0
+```
+
+---
+
+## Resources
+
 - [HamNoSys Notation System](https://www.sign-lang.uni-hamburg.de/hamnosys.html)
 - [SiGML (Signing Gesture Markup Language)](https://vh.cmp.uea.ac.uk/index.php/SiGML)
 - [CWASA Signing Avatars](https://vh.cmp.uea.ac.uk/index.php/CWA_Signing_Avatars)
+- [DictaSign Project](https://www.sign-lang.uni-hamburg.de/dicta-sign/portal/concepts/concepts_fre.html)
 
-## Citation & Documentation 📚
+## License
 
-If you use this project in your research, please cite:
-
-### Master Thesis
-* [PDF](docs/asl-3d-avatar-master-memory.pdf)  Amine Mami, Mohamed elFares Slimani, *Automated Arabic Algerian Sign Language Translation System Based on 3D Avatar Technology*, Final Master Project, Dept. of Mathematics and Computer Science, Faculty of Sciences, Yahia Fares Univ. of Médéa, 2023-2024.
-  
-  ```
-  @mastersthesis{Mami2024,
-    author    = {Amine Mami and Mohamed Elfares Slimani},
-    title     = {Automated Arabic Algerian Sign Language Translation System Based on 3D Avatar Technology},
-    school    = {Yahia Fares University of Médéa},
-    year      = {2023-2024}
-  }
-  ```
-
-### Research Paper
-* [PDF](NAFATH-4th-ID-141-ALSL2024.pdf)  Amine Mami, Mohamed elFares Slimani,  Taha Zerrouki and and Redha Mazari, “Arabic Algerian Sign Language Translation System Based on 3D Avatar Technology,” *Nafath*, Mada Center, Qatar, 2024.
-  
-  ```
-  @article{Mami-nafath2024,
-    author    = {Amine Mami, Mohamed Elfares Slimani, Taha Zerrouki, Redha Mazari},
-    title     = {Arabic Algerian Sign Language Translation System Based on 3D Avatar Technology},
-    journal   = {Nafath},
-    year      = {2024},
-    publisher = {Mada Center, Qatar}
-  }
-  ```
-
-## Acknowledgment 🙌
-We sincerely thank **Mr. Youcef Benyahia** for his expert contributions to our **3D avatars and animations**. Special thanks to **Mrs. Dharbou Maroua**, whose dedication as a **sign language specialist** greatly enhanced the quality of over 300 Algerian Sign Language (ASL) gestures. We are also grateful to the **teachers of the School for the Deaf in Beni Slimane, Medea**, for their essential feedback during prototype testing.
-
-## Contributors 👥
-
-- [Amine Mami](@TheCongres)
-- [Mohamed Elfares Slimani](@faresS69)
-- [Taha Zerrouki](@linuxscout) (Supervisor)
-- Redha Mazari
-
-## License 📜
-This project is licensed under **CC BY-NC-4.0**.
-
----
-🎯 *This project aims to bridge the communication gap for the deaf community in Algeria using cutting-edge 3D avatar technology. Your contributions and feedback are welcome!*
-
+[CC BY-NC-4.0](LICENSE)

@@ -1,0 +1,21 @@
+[tool.poetry]
+package-mode = false
+name = "sign-language-avatar"
+version = "0.1.0"
+description = "Automated Arabic Algerian Sign Language (ALSL) translation system using 3D avatar technology"
+authors = [
+    "Amine Mami",
+    "Mohamed Elfares Slimani",
+    "Taha Zerrouki",
+    "Redha Mazari",
+]
+license = "CC-BY-NC-4.0"
+readme = "README.md"
+
+[tool.poetry.dependencies]
+python = ">=3.7"
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"
+
