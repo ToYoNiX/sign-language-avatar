@@ -81,6 +81,22 @@ def test_cors_header_present():
     assert "access-control-allow-origin" in resp.headers
 
 
+def test_playground_route_ok():
+    resp = client.get("/playground")
+    assert resp.status_code == 200
+    assert "text/html" in resp.headers["content-type"]
+
+
+def test_playground_has_cwasa_div():
+    resp = client.get("/playground")
+    assert "CWASAAvatar" in resp.text
+
+
+def test_playground_has_sigml_textarea():
+    resp = client.get("/playground")
+    assert "sigmlInput" in resp.text
+
+
 def test_unknown_route_returns_404():
     resp = client.get("/does-not-exist-xyz")
     assert resp.status_code == 404

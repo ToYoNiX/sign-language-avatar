@@ -32,5 +32,10 @@ def avatar():
     return HTMLResponse(content=html)
 
 
+@app.get("/playground", response_class=HTMLResponse)
+def playground():
+    return HTMLResponse(content=(TEMPLATES_DIR / "playground.html").read_text(encoding="utf-8"))
+
+
 # Must be last — catches everything else as static files
 app.mount("/", StaticFiles(directory=WEB_DIR, html=True, follow_symlink=True), name="static")

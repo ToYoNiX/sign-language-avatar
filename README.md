@@ -59,6 +59,7 @@ poetry run python -m uvicorn app:app --host 0.0.0.0 --port 8000 --reload
 |-----|-------------|
 | `http://localhost:8000/` | Full standalone UI |
 | `http://localhost:8000/avatar` | Avatar-only iframe endpoint |
+| `http://localhost:8000/playground` | SiGML playground — paste raw SiGML and watch the avatar sign it |
 
 ### Environment variables
 

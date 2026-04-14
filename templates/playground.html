@@ -1,0 +1,168 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>SiGML Playground</title>
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <link rel="stylesheet" href="/cwa/cwasa.css" />
+    <script src="/cwa/allcsa.js"></script>
+    <style>
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body { font-family: sans-serif; background: #f5f5f5; color: #222; }
+
+        .layout {
+            display: flex;
+            height: 100vh;
+        }
+
+        .avatar-pane {
+            flex: 0 0 50%;
+            background: #fff;
+            display: flex;
+            align-items: stretch;
+        }
+
+        .editor-pane {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            padding: 20px;
+            gap: 12px;
+            overflow: hidden;
+        }
+
+        h1 {
+            font-size: 1.1rem;
+            font-weight: 600;
+            color: #333;
+        }
+
+        textarea {
+            flex: 1;
+            font-family: 'Courier New', Courier, monospace;
+            font-size: 13px;
+            padding: 10px;
+            border: 1px solid #ccc;
+            border-radius: 6px;
+            resize: none;
+            background: #1e1e1e;
+            color: #d4d4d4;
+            outline: none;
+        }
+
+        textarea:focus {
+            border-color: #4a9eff;
+        }
+
+        .controls {
+            display: flex;
+            gap: 8px;
+            align-items: center;
+        }
+
+        button {
+            padding: 8px 18px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: 500;
+        }
+
+        #playBtn {
+            background: #4a9eff;
+            color: #fff;
+        }
+        #playBtn:hover { background: #2a7fdf; }
+
+        #clearBtn {
+            background: #e0e0e0;
+            color: #333;
+        }
+        #clearBtn:hover { background: #ccc; }
+
+        #status {
+            font-size: 12px;
+            color: #888;
+            flex: 1;
+            text-align: right;
+        }
+
+        #status.error { color: #e05050; }
+        #status.ok    { color: #4caf50; }
+    </style>
+</head>
+<body onload="CWASA.init();">
+    <div class="layout">
+        <div class="avatar-pane">
+            <div class="CWASAAvatar av0" style="width:100%;height:100%;"></div>
+        </div>
+        <div class="editor-pane">
+            <h1>SiGML Playground</h1>
+            <textarea id="sigmlInput" spellcheck="false" placeholder="Paste your SiGML here…
+
+Example:
+<sigml>
+  <hns_sign gloss=&quot;hello&quot;>
+    <hamnosys_nonmanual></hamnosys_nonmanual>
+    <hamnosys_manual>
+      <hamflathand/>
+      <hampalml/>
+      <hamneutralspace/>
+      <hamsymmlr/>
+      <hamnomotion/>
+    </hamnosys_manual>
+  </hns_sign>
+</sigml>"></textarea>
+            <div class="controls">
+                <button id="playBtn" onclick="playSiGML()">Play</button>
+                <button id="clearBtn" onclick="clearInput()">Clear</button>
+                <span id="status"></span>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        function setStatus(msg, type) {
+            const el = document.getElementById('status');
+            el.textContent = msg;
+            el.className = type || '';
+        }
+
+        function playSiGML() {
+            const text = document.getElementById('sigmlInput').value.trim();
+            if (!text) {
+                setStatus('Paste some SiGML first.', 'error');
+                return;
+            }
+            try {
+                // Quick XML parse check before handing to CWASA
+                new DOMParser().parseFromString(text, 'application/xml');
+            } catch (e) {
+                setStatus('Invalid XML: ' + e.message, 'error');
+                return;
+            }
+            setStatus('Playing…', '');
+            CWASA.playSiGMLText(text);
+        }
+
+        function clearInput() {
+            document.getElementById('sigmlInput').value = '';
+            setStatus('', '');
+        }
+
+        // Ctrl+Enter / Cmd+Enter to play
+        document.getElementById('sigmlInput').addEventListener('keydown', (e) => {
+            if ((e.ctrlKey || e.metaKey) && e.key === 'Enter') {
+                e.preventDefault();
+                playSiGML();
+            }
+        });
+
+        // Wire up CWASA hooks for status feedback
+        CWASA.addHook('sigmlloaded', () => setStatus('Ready.', 'ok'));
+        CWASA.addHook('avatarsign',  () => setStatus('Signing…', 'ok'));
+        CWASA.addHook('animidle',    () => setStatus('Done.', 'ok'));
+    </script>
+</body>
+</html>
