@@ -29,41 +29,128 @@ Arabic text  →  word lookup  →  SiGML files  →  CWASA renderer  →  3D av
 
 | Requirement | Notes |
 |-------------|-------|
-| Python 3.7+ | Only used to serve static files; no pip packages needed |
+| Python 3.9+ | FastAPI + uvicorn |
 | A modern web browser | Chrome, Firefox, Safari, or Edge |
-
-The web interface is pure HTML/CSS/JavaScript with no build step. The CWASA rendering library is bundled in the repo (`web-simulator/cwa/allcsa.js`).
-
-The Python utility scripts in `tests/` and `tools/` also use only the standard library (`os`, `sys`, `csv`, `json`, `argparse`).
 
 ---
 
 ## Running Locally
 
-### With Poetry (recommended)
-
-[Poetry](https://python-poetry.org/) manages the Python environment and pins the interpreter version.
+### Setup
 
 ```bash
 # Install Poetry if you don't have it
 curl -sSL https://install.python-poetry.org | python3 -
 
-# Install the project (creates a virtual env, nothing to download)
+# Install dependencies
 poetry install
 
-# Serve the web interface
-cd web-simulator
-poetry run python3 -m http.server 8000
+# Copy the env template and edit if needed
+cp .env.example .env
 ```
 
-### Without Poetry
+### Start the server
 
 ```bash
-cd web-simulator
-python3 -m http.server 8000
+poetry run python -m uvicorn app:app --host 0.0.0.0 --port 8000 --reload
 ```
 
-Then open [http://localhost:8000](http://localhost:8000) in your browser.
+| URL | Description |
+|-----|-------------|
+| `http://localhost:8000/` | Full standalone UI |
+| `http://localhost:8000/avatar` | Avatar-only iframe endpoint |
+
+### Environment variables
+
+| Variable | Default | Description |
+|----------|---------|-------------|
+| `ALLOWED_ORIGIN` | `*` | Origin of the parent page embedding `/avatar`. Set to your frontend URL in production (e.g. `https://your-frontend.com`). |
+
+---
+
+## Avatar Iframe Endpoint
+
+`GET /avatar` serves a full-viewport, controls-free page designed to be embedded as an iframe in another frontend.
+
+### Embedding
+
+```html
+<iframe
+  id="avatar"
+  src="http://localhost:8000/avatar"
+  width="400"
+  height="500"
+  style="border: none; background: transparent;"
+></iframe>
+```
+
+### Sending commands (`parent → iframe`)
+
+Use `postMessage` to control the avatar from the parent page:
+
+```js
+const avatar = document.getElementById('avatar').contentWindow;
+
+// Sign Arabic text — words are looked up against the dictionary automatically.
+// Unrecognised words are silently skipped.
+avatar.postMessage({ type: 'sign', text: 'مرحبا كيف حالك' }, '*');
+
+// Stop the current signing sequence
+avatar.postMessage({ type: 'stop' }, '*');
+```
+
+### Receiving status events (`iframe → parent`)
+
+The iframe posts status events back so the parent can react to the animation lifecycle:
+
+```js
+window.addEventListener('message', (event) => {
+  const { type, ...payload } = event.data;
+
+  switch (type) {
+    case 'ready':
+      // Dictionary loaded, avatar is ready to receive commands
+      break;
+
+    case 'signing':
+      // Fired for each word as it starts playing
+      // payload: { word: 'مرحبا', index: 0, total: 3 }
+      break;
+
+    case 'done':
+      // Full sequence finished
+      break;
+
+    case 'error':
+      // No matching words were found in the dictionary
+      // payload: { reason: 'no matching words found' }
+      break;
+  }
+});
+```
+
+### Origin security
+
+In development `ALLOWED_ORIGIN=*` allows any parent page to send commands. In production set it to your frontend's exact origin in `.env`:
+
+```
+ALLOWED_ORIGIN=https://your-frontend.com
+```
+
+The iframe will silently ignore `postMessage` events from any other origin.
+
+---
+
+## Running Tests
+
+```bash
+poetry run python -m pytest -v
+```
+
+| Test file | What it covers |
+|-----------|---------------|
+| `tests/test_api.py` | FastAPI routes — `GET /`, `GET /avatar`, static assets, CORS headers, origin injection, 404 behaviour |
+| `tests/test_extractor.py` | `FileExtractor` — JSON, CSV wordlist, categories, statistics outputs, edge cases (empty source, single word) |
 
 ---
 
@@ -95,6 +182,8 @@ python3 extract_data_word_list.py -s ../source-data -o output -a all
 
 ```
 .
+├── templates/
+│   └── avatar.html             # Iframe-only avatar endpoint (served at /avatar)
 ├── data/
 │   ├── categories_files.json   # Word→SiGML index (loaded by the web app)
 │   └── sigml/                  # SiGML animation files
@@ -105,12 +194,15 @@ python3 extract_data_word_list.py -s ../source-data -o output -a all
 ├── tools/
 │   └── import_fr_sigml_to_arabic.py
 ├── web-simulator/
-│   ├── index.html              # Main web interface
+│   ├── index.html              # Full standalone UI (served at /)
 │   ├── cwa/
 │   │   ├── allcsa.js           # CWASA avatar rendering library
 │   │   └── cwacfg.json         # Avatar list and renderer config
 │   ├── avatars/                # 3D avatar models (JAR files)
 │   └── shaders/
+├── app.py                      # FastAPI server
+├── .env                        # Local env vars (not committed)
+├── .env.example                # Env var template
 ├── Makefile
 ├── pyproject.toml
 └── LICENSE                     # CC BY-NC-4.0

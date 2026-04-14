@@ -13,7 +13,18 @@ license = "CC-BY-NC-4.0"
 readme = "README.md"
 
 [tool.poetry.dependencies]
-python = ">=3.7"
+python = ">=3.9"
+fastapi = ">=0.100.0"
+uvicorn = {extras = ["standard"], version = ">=0.23.0"}
+python-dotenv = ">=1.0.0"
+
+[tool.poetry.group.dev.dependencies]
+pytest = ">=7.0"
+httpx = ">=0.24.0"
+
+[tool.pytest.ini_options]
+pythonpath = ["."]
+testpaths = ["tests"]
 
 [build-system]
 requires = ["poetry-core"]

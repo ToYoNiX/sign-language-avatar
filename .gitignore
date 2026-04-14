@@ -1,2 +1,5 @@
 archive/
 /tests/output/
+.env
+__pycache__/
+

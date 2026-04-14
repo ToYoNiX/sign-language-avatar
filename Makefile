@@ -14,12 +14,10 @@ publish:
 	git push origin master 
 
 server:
-	# run server
-	python3 -m http.server 
+	poetry run python -m uvicorn app:app --host 0.0.0.0 --port 8000 --reload
+
 test:
-	python -m unittest discover tests
-test3:
-	python3 -m unittest discover tests
+	poetry run python -m pytest
 docs:
 	epydoc -v --config epydoc.conf
 SOURCE=../source-data

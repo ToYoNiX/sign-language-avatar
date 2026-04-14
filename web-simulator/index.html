@@ -39,7 +39,7 @@
 
         // Sliding window function to find valid glosses
         function findGlosses(input) {
-            var words = input.split(' ');
+            var words = input.trim().split(/\s+/).filter(Boolean);
             var glosses = [];
             for (var i = 0; i < words.length; i++) {
                 for (var len = 2; len >= 1; len--) {
