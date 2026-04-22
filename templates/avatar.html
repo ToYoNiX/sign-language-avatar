@@ -3,9 +3,9 @@
 <head>
     <meta charset="UTF-8">
     <title>ARSL Avatar</title>
-    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
-    <link rel="stylesheet" href="/cwa/cwasa.css" />
-    <script src="/cwa/allcsa.js"></script>
+    <link rel="icon" type="image/svg+xml" href="favicon.svg" />
+    <link rel="stylesheet" href="cwa/cwasa.css" />
+    <script src="cwa/allcsa.js"></script>
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
         html, body { width: 100%; height: 100%; overflow: hidden; background: transparent; }
@@ -27,7 +27,7 @@
             return flattened;
         }
 
-        fetch('/words.json')
+        fetch('words.json')
             .then(r => r.json())
             .then(data => {
                 wordSet = new Set(normalizeWords(data));
@@ -35,7 +35,7 @@
             })
             .catch(() => {
                 // Backward compatibility with old index file name.
-                return fetch('/categories_files.json')
+                return fetch('categories_files.json')
                     .then(r => r.json())
                     .then(data => {
                         wordSet = new Set(normalizeWords(data));
@@ -49,7 +49,7 @@
         }
 
         function playSiGML(sigmlURL) {
-            CWASA.playSiGMLURL(window.location.origin + '/' + sigmlURL);
+            CWASA.playSiGMLURL(new URL(sigmlURL, window.location.href).href);
         }
 
         function sign(text) {
