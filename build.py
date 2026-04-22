@@ -15,9 +15,9 @@ def build(origin: str) -> None:
 
     shutil.copytree(WEB_DIR, OUT_DIR, symlinks=False)
 
-    avatar_html = (TEMPLATES_DIR / "avatar.html").read_text(encoding="utf-8")
-    avatar_html = avatar_html.replace("__ALLOWED_ORIGIN__", origin)
-    (OUT_DIR / "avatar.html").write_text(avatar_html, encoding="utf-8")
+    embed_html = (TEMPLATES_DIR / "embed.html").read_text(encoding="utf-8")
+    embed_html = embed_html.replace("__ALLOWED_ORIGIN__", origin)
+    (OUT_DIR / "embed.html").write_text(embed_html, encoding="utf-8")
 
     shutil.copy2(TEMPLATES_DIR / "playground.html", OUT_DIR / "playground.html")
 

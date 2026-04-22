@@ -16,39 +16,38 @@ def test_root_serves_index_html():
     assert "CWASAAvatar" in resp.text
 
 
-def test_avatar_route_ok():
-    resp = client.get("/avatar")
+def test_embed_route_ok():
+    resp = client.get("/embed")
     assert resp.status_code == 200
     assert "text/html" in resp.headers["content-type"]
 
 
-def test_avatar_placeholder_is_replaced():
-    resp = client.get("/avatar")
+def test_embed_placeholder_is_replaced():
+    resp = client.get("/embed")
     assert "__ALLOWED_ORIGIN__" not in resp.text
 
 
-def test_avatar_injects_wildcard_origin():
-    resp = client.get("/avatar")
+def test_embed_injects_wildcard_origin():
+    resp = client.get("/embed")
     assert 'const ALLOWED_ORIGIN = "*"' in resp.text
 
 
-def test_avatar_injects_custom_origin(monkeypatch):
+def test_embed_injects_custom_origin(monkeypatch):
     monkeypatch.setenv("ALLOWED_ORIGIN", "https://my-frontend.com")
-    # Re-read the template the same way the route does
     from pathlib import Path
-    html = (Path(__file__).parent.parent / "templates" / "avatar.html").read_text(encoding="utf-8")
+    html = (Path(__file__).parent.parent / "templates" / "embed.html").read_text(encoding="utf-8")
     html = html.replace("__ALLOWED_ORIGIN__", "https://my-frontend.com")
     assert 'const ALLOWED_ORIGIN = "https://my-frontend.com"' in html
     assert "__ALLOWED_ORIGIN__" not in html
 
 
-def test_avatar_has_cwasa_div():
-    resp = client.get("/avatar")
+def test_embed_has_cwasa_div():
+    resp = client.get("/embed")
     assert "CWASAAvatar" in resp.text
 
 
-def test_avatar_loads_cwasa_js():
-    resp = client.get("/avatar")
+def test_embed_loads_cwasa_js():
+    resp = client.get("/embed")
     assert "allcsa.js" in resp.text
 
 

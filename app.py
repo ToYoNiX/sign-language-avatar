@@ -25,9 +25,9 @@ TEMPLATES_DIR = BASE_DIR / "templates"
 WEB_DIR = BASE_DIR / "web-simulator"
 
 
-@app.get("/avatar", response_class=HTMLResponse)
-def avatar():
-    html = (TEMPLATES_DIR / "avatar.html").read_text(encoding="utf-8")
+@app.get("/embed", response_class=HTMLResponse)
+def embed():
+    html = (TEMPLATES_DIR / "embed.html").read_text(encoding="utf-8")
     html = html.replace("__ALLOWED_ORIGIN__", ALLOWED_ORIGIN)
     return HTMLResponse(content=html)
 

@@ -58,27 +58,27 @@ poetry run python -m uvicorn app:app --host 0.0.0.0 --port 8000 --reload
 | URL | Description |
 |-----|-------------|
 | `http://localhost:8000/` | Full standalone UI |
-| `http://localhost:8000/avatar` | Avatar-only iframe endpoint |
+| `http://localhost:8000/embed` | Avatar-only iframe endpoint |
 | `http://localhost:8000/playground` | SiGML playground — paste raw SiGML and watch the avatar sign it |
 
 ### Environment variables
 
 | Variable | Default | Description |
 |----------|---------|-------------|
-| `ALLOWED_ORIGIN` | `*` | Origin of the parent page embedding `/avatar`. Set to your frontend URL in production (e.g. `https://your-frontend.com`). |
+| `ALLOWED_ORIGIN` | `*` | Origin of the parent page embedding `/embed`. Set to your frontend URL in production (e.g. `https://your-frontend.com`). |
 
 ---
 
-## Avatar Iframe Endpoint
+## Embed Iframe Endpoint
 
-`GET /avatar` serves a full-viewport, controls-free page designed to be embedded as an iframe in another frontend.
+`GET /embed` serves a full-viewport, controls-free page designed to be embedded as an iframe in another frontend.
 
 ### Embedding
 
 ```html
 <iframe
   id="avatar"
-  src="http://localhost:8000/avatar"
+  src="http://localhost:8000/embed"
   width="400"
   height="500"
   style="border: none; background: transparent;"
@@ -150,7 +150,7 @@ poetry run python -m pytest -v
 
 | Test file | What it covers |
 |-----------|---------------|
-| `tests/test_api.py` | FastAPI routes — `GET /`, `GET /avatar`, static assets, CORS headers, origin injection, 404 behaviour |
+| `tests/test_api.py` | FastAPI routes — `GET /`, `GET /embed`, static assets, CORS headers, origin injection, 404 behaviour |
 | `tests/test_extractor.py` | `FileExtractor` — flat JSON word index, CSV wordlist, category/statistics outputs, edge cases (empty source, single word) |
 
 ---
@@ -185,7 +185,7 @@ python3 extract_data_word_list.py -s ../data/sigml -o output -a all
 .
 ├── app.py                      # FastAPI server
 ├── templates/
-│   ├── avatar.html             # Iframe-only avatar endpoint (served at /avatar)
+│   ├── embed.html              # Iframe-only embed endpoint (served at /embed)
 │   └── playground.html         # SiGML playground page (served at /playground)
 ├── web-simulator/
 │   ├── index.html              # Full standalone UI (served at /)
