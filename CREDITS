@@ -1,10 +1,38 @@
-## Acknowledgment 🙌
+## Original Work
 
-We sincerely thank **Mr. Youcef Benyahia** for his expert contributions to our **3D avatars and animations**. Special thanks to **Mrs. Dharbou Maroua**, whose dedication as a **sign language specialist** greatly enhanced the quality of over 300 Algerian Sign Language (ASL) gestures. We are also grateful to the **teachers of the School for the Deaf in Beni Slimane, Medea**, for their essential feedback during prototype testing.
+This project is based on [algerianSignLanguage-avatar](https://github.com/linuxscout/algerianSignLanguage-avatar) by Amine Mami, Mohamed Elfares Slimani, Taha Zerrouki, and Redha Mazari.
 
-## Contributors 👥
+If you use their work in your research, please cite:
 
-- [Amine Mami](@TheCongres)
-- Mohamed Elfares Slimani
-- [Taha Zerrouki](@linuxscout) (Supervisor)
-- Redha Mazari
+### Master Thesis
+
+Amine Mami, Mohamed elFares Slimani, *Automated Arabic Algerian Sign Language Translation System Based on 3D Avatar Technology*, Final Master Project, Dept. of Mathematics and Computer Science, Faculty of Sciences, Yahia Fares Univ. of Médéa, 2023-2024.
+
+```bibtex
+@mastersthesis{Mami2024,
+  author = {Amine Mami and Mohamed Elfares Slimani},
+  title  = {Automated Arabic Algerian Sign Language Translation System Based on 3D Avatar Technology},
+  school = {Yahia Fares University of Médéa},
+  year   = {2023-2024}
+}
+```
+
+### Research Paper
+
+Amine Mami, Mohamed elFares Slimani, Taha Zerrouki and Redha Mazari, "Arabic Algerian Sign Language Translation System Based on 3D Avatar Technology," *Nafath*, Mada Center, Qatar, 2024.
+
+```bibtex
+@article{Mami-nafath2024,
+  author    = {Amine Mami and Mohamed Elfares Slimani and Taha Zerrouki and Redha Mazari},
+  title     = {Arabic Algerian Sign Language Translation System Based on 3D Avatar Technology},
+  journal   = {Nafath},
+  year      = {2024},
+  publisher = {Mada Center, Qatar}
+}
+```
+
+---
+
+## Acknowledgment
+
+We acknowledge the work of **Amine Mami**, **Mohamed Elfares Slimani**, **Taha Zerrouki**, and **Redha Mazari** who created the original project that this work is built upon. We also acknowledge everyone who contributed to their work, including **Mr. Youcef Benyahia** for his expert contributions to the **3D avatars and animations**, **Mrs. Dharbou Maroua** for her work as a **sign language specialist** in building over 300 Algerian Sign Language gestures, and the **teachers of the School for the Deaf in Beni Slimane, Medea** for their essential feedback during prototype testing.
