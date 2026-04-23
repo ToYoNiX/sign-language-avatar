@@ -142,6 +142,46 @@ The iframe will silently ignore `postMessage` events from any other origin.
 
 ---
 
+## Deploying to GitHub Pages
+
+The repository includes a build script and a GitHub Actions workflow that automatically deploys the avatar as a static site to GitHub Pages on every push to `master`.
+
+### Setup
+
+1. Go to your repository **Settings → Pages**
+2. Under **Build and deployment**, set the source to **GitHub Actions**
+3. Push to `master` — the workflow triggers automatically and deploys the site
+
+### URLs after deployment
+
+| URL | Description |
+|-----|-------------|
+| `https://<user>.github.io/<repo>/` | Full standalone UI |
+| `https://<user>.github.io/<repo>/embed` | Avatar-only iframe endpoint |
+| `https://<user>.github.io/<repo>/playground` | SiGML playground |
+
+### Origin configuration
+
+The GitHub Pages deployment builds with `ALLOWED_ORIGIN=*` by default, meaning **any frontend can embed and use the iframe**. This is intentional for a publicly hosted avatar.
+
+If you want to restrict it to a specific frontend, pass `--origin` to `build.py` in the workflow:
+
+```yaml
+- name: Build static site
+  run: python build.py --origin "https://your-frontend.com"
+```
+
+To explicitly allow all origins (the default):
+
+```yaml
+- name: Build static site
+  run: python build.py --origin "*"
+```
+
+Or simply omit `--origin` entirely — `*` is the default.
+
+---
+
 ## Running Tests
 
 ```bash
@@ -184,6 +224,9 @@ python3 extract_data_word_list.py -s ../data/sigml -o output -a all
 ```
 .
 ├── app.py                      # FastAPI server
+├── build.py                    # Static site build script for GitHub Pages
+├── .github/workflows/
+│   └── deploy.yml              # GitHub Actions workflow — deploys to GitHub Pages on push to master
 ├── templates/
 │   ├── embed.html              # Iframe-only embed endpoint (served at /embed)
 │   └── playground.html         # SiGML playground page (served at /playground)
