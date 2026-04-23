@@ -1,6 +1,6 @@
 # Arabic Sign Language Avatar
 
-A web-based system that translates Arabic text into Arabic Sign Language (ARSL) animations rendered by a 3D avatar in real time.
+A web-based system that translates Arabic text into Arabic Sign Language (ArSL) animations rendered by a 3D avatar in real time.
 
 > This is a fork of [linuxscout/algerianSignLanguage-avatar](https://github.com/linuxscout/algerianSignLanguage-avatar).
 
@@ -11,16 +11,16 @@ A web-based system that translates Arabic text into Arabic Sign Language (ARSL) 
 The pipeline has three stages:
 
 **1. Input**
-The user types Arabic text into the web interface. A sliding-window algorithm matches each word (or phrase) against a built-in flat dictionary of ARSL words.
+The user types Arabic text into the web interface. A sliding-window algorithm matches each word (or phrase) against the dictionary.
 
 **2. Lookup**
-Each matched word maps to a [SiGML](https://vh.cmp.uea.ac.uk/index.php/SiGML) (Signing Gesture Markup Language) file. SiGML is an XML-based format derived from [HamNoSys](https://www.sign-lang.uni-hamburg.de/hamnosys.html) (Hamburg Notation System), a phonetic notation for sign languages. The dictionary index lives in `data/words.json` (and `data/categories_files.json` for compatibility); the SiGML files themselves live in `data/sigml/`.
+Each matched word maps to a [SiGML](https://vh.cmp.uea.ac.uk/index.php/SiGML) (Signing Gesture Markup Language) file. SiGML is an XML-based format derived from [HamNoSys](https://www.sign-lang.uni-hamburg.de/hamnosys.html) (Hamburg Notation System), a phonetic notation for sign languages. The dictionary lives in `data/dict/dictionary.json`; the SiGML files live in `data/sigml/`. Both are symlinked into `web-simulator/` so the dev server and build see them automatically.
 
 **3. Rendering**
-The [CWASA](https://vh.cmp.uea.ac.uk/index.php/CWA_Signing_Avatars) (CWA Signing Avatars) JavaScript library (`web-simulator/cwa/allcsa.js`) loads each SiGML file and drives a 3D avatar through the corresponding gesture sequence, playing one sign every ~1650 ms.
+The [CWASA](https://vh.cmp.uea.ac.uk/index.php/CWA_Signing_Avatars) (CWA Signing Avatars) JavaScript library (`web-simulator/cwa/allcsa.js`) loads each SiGML file and drives a 3D avatar through the corresponding gesture sequence. Timing and other runtime parameters are controlled via `web-simulator/avatar.json`.
 
 ```
-Arabic text  →  word lookup  →  SiGML files  →  CWASA renderer  →  3D avatar animation
+Arabic text  →  dictionary lookup  →  SiGML files  →  CWASA renderer  →  3D avatar animation
 ```
 
 ---
@@ -69,6 +69,57 @@ poetry run python -m uvicorn app:app --host 0.0.0.0 --port 8000 --reload
 
 ---
 
+## Configuring the Avatar
+
+All runtime tuning lives in **`web-simulator/avatar.json`**. Edit this file to change behaviour without touching any code:
+
+```json
+{
+  "signDuration": 1000,
+  "dictionary": "dict/dictionary.json"
+}
+```
+
+| Field | Type | Description |
+|-------|------|-------------|
+| `signDuration` | number (ms) | How long the avatar waits between signs. Increase if signs feel rushed, decrease if they feel slow. |
+| `dictionary` | string (path) | Path to the dictionary file, relative to the page root. |
+
+---
+
+## Managing the Dictionary
+
+The dictionary lives in **`data/dictionary.json`**. It is a JSON object where each key is a category name and each value is an array of words that have a corresponding SiGML file in `data/sigml/`.
+
+```json
+{
+  "الارقام": ["1", "2", "3", "4", "5", "6", "7", "8", "9", "10", "16", "17", "18", "19", "20", "30", "40", "50", "70", "80", "90"]
+}
+```
+
+### Adding a new word
+
+1. Add the SiGML file for the word to `data/sigml/<word>.sigml`
+2. Add the word string to the appropriate category array in `data/dict/dictionary.json`
+3. If the word belongs to a new category, add a new key to the JSON object
+
+That's it — the symlinks mean the dev server and static build both pick it up automatically.
+
+### Adding a new category
+
+Add a new top-level key to `data/dict/dictionary.json`:
+
+```json
+{
+  "الارقام": ["1", "2", ...],
+  "التحيات": ["مرحبا", "شكرا", ...]
+}
+```
+
+Each word in the array must have a matching `.sigml` file in `data/sigml/`.
+
+---
+
 ## Embed Iframe Endpoint
 
 `GET /embed` serves a full-viewport, controls-free page designed to be embedded as an iframe in another frontend.
@@ -92,9 +143,9 @@ Use `postMessage` to control the avatar from the parent page:
 ```js
 const avatar = document.getElementById('avatar').contentWindow;
 
-// Sign Arabic text — words are looked up against the dictionary automatically.
+// Sign Arabic text — words are matched against the dictionary automatically.
 // Unrecognised words are silently skipped.
-avatar.postMessage({ type: 'sign', text: 'مرحبا كيف حالك' }, '*');
+avatar.postMessage({ type: 'sign', text: '1 2 3' }, '*');
 
 // Stop the current signing sequence
 avatar.postMessage({ type: 'stop' }, '*');
@@ -115,7 +166,7 @@ window.addEventListener('message', (event) => {
 
     case 'signing':
       // Fired for each word as it starts playing
-      // payload: { word: 'مرحبا', index: 0, total: 3 }
+      // payload: { word: '1', index: 0, total: 3 }
       break;
 
     case 'done':
@@ -162,23 +213,16 @@ The repository includes a build script and a GitHub Actions workflow that automa
 
 ### Origin configuration
 
-The GitHub Pages deployment builds with `ALLOWED_ORIGIN=*` by default, meaning **any frontend can embed and use the iframe**. This is intentional for a publicly hosted avatar.
+The GitHub Pages deployment builds with `ALLOWED_ORIGIN=*` by default, meaning any frontend can embed and use the iframe.
 
-If you want to restrict it to a specific frontend, pass `--origin` to `build.py` in the workflow:
+To restrict it to a specific frontend, pass `--origin` to `build.py` in the workflow:
 
 ```yaml
 - name: Build static site
   run: python build.py --origin "https://your-frontend.com"
 ```
 
-To explicitly allow all origins (the default):
-
-```yaml
-- name: Build static site
-  run: python build.py --origin "*"
-```
-
-Or simply omit `--origin` entirely — `*` is the default.
+Or omit `--origin` entirely to keep the default `*`.
 
 ---
 
@@ -191,31 +235,7 @@ poetry run python -m pytest -v
 | Test file | What it covers |
 |-----------|---------------|
 | `tests/test_api.py` | FastAPI routes — `GET /`, `GET /embed`, static assets, CORS headers, origin injection, 404 behaviour |
-| `tests/test_extractor.py` | `FileExtractor` — flat JSON word index, CSV wordlist, category/statistics outputs, edge cases (empty source, single word) |
-
----
-
-## Data Utilities
-
-These scripts regenerate processed data files from `data/sigml/`.
-
-```bash
-# Generate all output files
-make test_all
-
-# Or individually:
-make test_json        # data/categories_files.json (flat word list)
-make test_wordlist    # CSV word list
-make test_categories  # category breakdown
-make test_stat        # statistics
-```
-
-You can also call the script directly:
-
-```bash
-cd tests
-python3 extract_data_word_list.py -s ../data/sigml -o output -a all
-```
+| `tests/test_extractor.py` | `FileExtractor` — word index, CSV wordlist, category/statistics outputs, edge cases |
 
 ---
 
@@ -223,43 +243,49 @@ python3 extract_data_word_list.py -s ../data/sigml -o output -a all
 
 ```
 .
-├── app.py                      # FastAPI server
-├── build.py                    # Static site build script for GitHub Pages
+├── app.py                        # FastAPI dev server
+├── build.py                      # Static site build script for GitHub Pages
 ├── .github/workflows/
-│   └── deploy.yml              # GitHub Actions workflow — deploys to GitHub Pages on push to master
+│   └── deploy.yml                # CI/CD — deploys to GitHub Pages on push to master
 ├── templates/
-│   ├── embed.html              # Iframe-only embed endpoint (served at /embed)
-│   └── playground.html         # SiGML playground page (served at /playground)
+│   ├── embed.html                # Iframe-only embed page (/embed); __ALLOWED_ORIGIN__ injected at build/serve time
+│   └── playground.html           # SiGML playground page (/playground)
 ├── web-simulator/
-│   ├── index.html              # Full standalone UI (served at /)
-│   ├── sigml/                  # Runtime SiGML files used by the simulator
-│   ├── words.json              # Flat word index used by the UI
-│   ├── categories_files.json   # Flat word index (legacy filename)
+│   ├── index.html                # Full standalone UI (/)
+│   ├── avatar.js                 # Shared avatar logic — loads config + dictionary, exposes Avatar.sign/stop
+│   ├── avatar.json               # Runtime config (signDuration, dictionary path) — edit to tune behaviour
+│   ├── sigml -> ../data/sigml         # Symlink — canonical SiGML files live in data/
+│   ├── dictionary.json -> ../data/dictionary.json  # Symlink — canonical dictionary lives in data/
 │   ├── cwa/
-│   │   ├── allcsa.js           # CWASA avatar rendering library
-│   │   └── cwacfg.json         # Avatar list and renderer config
-│   ├── avatars/                # 3D avatar models (JAR files)
+│   │   ├── allcsa.js             # CWASA avatar rendering library (bundled, do not edit)
+│   │   └── cwacfg.json           # Avatar list and renderer config
+│   ├── avatars/                  # 3D avatar models
 │   ├── shaders/
-│   ├── cwaclientcfg.json       # CWASA client config
-│   ├── h2s.xsl                 # HamNoSys-to-SiGML transform helpers
+│   ├── cwaclientcfg.json         # CWASA client config
+│   ├── h2s.xsl                   # HamNoSys → SiGML XSLT transform
 │   └── favicon.svg
 ├── data/
-│   ├── sigml/                  # Canonical flat SiGML dataset
-│   ├── words.json              # Canonical flat word index
-│   └── categories_files.json   # Flat word index (legacy filename)
+│   ├── sigml/                    # SiGML animation files — one file per word (<word>.sigml)
+│   └── dictionary.json           # Categorised word list — single source of truth for all words
 ├── tests/
 │   ├── test_api.py
 │   ├── test_extractor.py
 │   └── extract_data_word_list.py
-├── sigml-reference.md          # SiGML reference
+├── sigml-reference.md            # SiGML format reference
 ├── CREDITS
-├── .env                        # Local env vars (not committed)
-├── .env.example                # Env var template
+├── .env                          # Local env vars (not committed)
+├── .env.example                  # Env var template
 ├── Makefile
 ├── poetry.lock
 ├── pyproject.toml
-└── LICENSE                     # CC BY-NC-4.0
+└── LICENSE                       # CC BY-NC-4.0
 ```
+
+### How the build works
+
+`build.py` copies `web-simulator/` into `pages/` (resolving all symlinks into real files), then injects `__ALLOWED_ORIGIN__` into the embed template and copies the playground template. The `pages/` directory is .gitignored — it is generated output only.
+
+The FastAPI dev server (`app.py`) serves `web-simulator/` directly with `follow_symlink=True`, so symlinks are transparent and no build step is needed during development.
 
 ---
 

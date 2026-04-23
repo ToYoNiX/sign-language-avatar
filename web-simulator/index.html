@@ -2,164 +2,244 @@
 <html>
 <head>
     <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>3D ArSL Avatar</title>
     <meta http-equiv="Access-Control-Allow-Origin" content="*">
     <meta http-equiv="Access-Control-Allow-Methods" content="GET">
     <link rel="icon" type="image/svg+xml" href="favicon.svg" />
     <link rel="stylesheet" href="cwa/cwasa.css" />
-    <script type="text/javascript" src="cwa/allcsa.js"></script>
-    <script type="text/javascript">
-        var playingTimeout; // Global variable to keep track of the timeout
-        var stopRequested = false; // Global variable to track stop requests
-        var words = []; // Global variable to store all available words
-        var wordSet = new Set();
+    <script src="cwa/allcsa.js"></script>
+    <script src="avatar.js"></script>
+    <style>
+        * { box-sizing: border-box; }
 
-        function normalizeWords(data) {
-            if (Array.isArray(data)) {
-                return data;
-            }
-            // Backward compatibility if old grouped JSON is present.
-            var flattened = [];
-            for (var key in data) {
-                if (Array.isArray(data[key])) {
-                    flattened = flattened.concat(data[key]);
-                }
-            }
-            return flattened;
+        body {
+            margin: 0;
+            padding: 12px;
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+            font-family: sans-serif;
+            background: #f4f4f4;
         }
 
-        // Load words from JSON file
-        fetch('words.json')
-            .then(response => response.json())
-            .then(data => {
-                words = normalizeWords(data);
-                wordSet = new Set(words);
-                populateWordMenu();
-            })
-            .catch(function () {
-                // Fallback to legacy file name.
-                return fetch('categories_files.json')
-                    .then(response => response.json())
-                    .then(data => {
-                        words = normalizeWords(data);
-                        wordSet = new Set(words);
-                        populateWordMenu();
-                    });
-            });
-
-        // Play a single SiGML URL
-        function playSiGML(sigmlURL) {
-            var loc = window.location.href;
-            var locDir = loc.substring(0, loc.lastIndexOf('/'));
-            sigmlURL = locDir + "/" + sigmlURL;
-            CWASA.playSiGMLURL(sigmlURL);
+        #avatar-area {
+            flex: 1;
+            min-height: 0;
+            background: #fff;
+            border-radius: 8px;
+            overflow: hidden;
+            margin-bottom: 12px;
         }
 
-        // Play gloss words sequentially
+        .CWASAAvatar { width: 100%; height: 100%; }
+
+        #controls {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        .panel {
+            background: #fff;
+            border-radius: 8px;
+            padding: 12px 16px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .panel-label {
+            font-size: 12px;
+            font-weight: 600;
+            color: #888;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            white-space: nowrap;
+        }
+
+        .panel-label::after {
+            content: '';
+            display: block;
+            width: 1px;
+            height: 20px;
+            background: #e0e0e0;
+            margin: 4px auto 0;
+        }
+
+        input[type="text"] {
+            flex: 1;
+            min-width: 0;
+            padding: 10px 12px;
+            border: 1px solid #ddd;
+            border-radius: 6px;
+            font-size: 15px;
+            direction: rtl;
+            outline: none;
+        }
+
+        input[type="text"]:focus { border-color: #4a9eff; }
+
+        select {
+            flex: 1;
+            min-width: 0;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 6px;
+            font-size: 14px;
+            background: #fafafa;
+            outline: none;
+            cursor: pointer;
+        }
+
+        select:focus { border-color: #4a9eff; }
+
+        button {
+            padding: 10px 18px;
+            border: none;
+            border-radius: 6px;
+            font-size: 14px;
+            font-weight: 500;
+            cursor: pointer;
+            white-space: nowrap;
+            min-height: 44px;
+        }
+
+        .btn-primary { background: #4a9eff; color: #fff; }
+        .btn-primary:hover { background: #2a7fdf; }
+
+        .btn-secondary { background: #e8e8e8; color: #333; }
+        .btn-secondary:hover { background: #d4d4d4; }
+
+        .divider {
+            width: 1px;
+            height: 28px;
+            background: #e0e0e0;
+            flex-shrink: 0;
+        }
+
+        .arrow {
+            color: #bbb;
+            font-size: 16px;
+            flex-shrink: 0;
+        }
+
+        /* ── Mobile ── */
+        @media (max-width: 600px) {
+            body { padding: 8px; gap: 8px; }
+
+            .panel { flex-wrap: wrap; gap: 8px; }
+
+            .panel-label { width: 100%; }
+            .panel-label::after { display: none; }
+
+            /* sentence panel: input full width, buttons share the row below */
+            #glossInput { width: 100%; }
+
+            #sign-buttons { display: contents; }
+
+            /* dictionary panel: both selects full width, button on its own row */
+            #categorySelect,
+            #wordSelect    { width: 100%; }
+
+            .arrow  { display: none; }
+            .divider { display: none; }
+        }
+    </style>
+    <script>
+        Avatar.ready.then(populateCategoryMenu);
+
         function playGloss() {
-            stopRequested = false; // Reset the stop request flag
-            var glossInput = document.getElementById("glossInput").value;
-            var glosses = findGlosses(glossInput);
-            playGlossesSequentially(glosses, 0);
+            Avatar.sign(document.getElementById('glossInput').value);
         }
 
-        // Sliding window function to find valid glosses
-        function findGlosses(input) {
-            var words = input.trim().split(/\s+/).filter(Boolean);
-            var glosses = [];
-            for (var i = 0; i < words.length; i++) {
-                for (var len = 2; len >= 1; len--) {
-                    if (i + len <= words.length) {
-                        var potentialGloss = words.slice(i, i + len).join(' ');
-                        if (isValidGloss(potentialGloss)) {
-                            glosses.push(potentialGloss);
-                            i += len - 1;
-                            break;
-                        }
-                    }
-                }
-            }
-            return glosses;
-        }
-
-        // Check if a gloss (file name) is valid
-        function isValidGloss(gloss) {
-            return wordSet.has(gloss);
-        }
-
-        // Recursive function to play glosses sequentially
-        function playGlossesSequentially(glosses, index) {
-            if (index < glosses.length && !stopRequested) {
-                var sigmlURL = "sigml/" + glosses[index] + ".sigml";
-                playSiGML(sigmlURL);
-
-                playingTimeout = setTimeout(function () {
-                    playGlossesSequentially(glosses, index + 1);
-                }, 1650);
-            }
-        }
-
-        // Function to reset the input and stop the avatar
         function resetGloss() {
-            document.getElementById("glossInput").value = "";
-            stopRequested = true; // Set the stop request flag
-            clearTimeout(playingTimeout);
+            document.getElementById('glossInput').value = '';
+            Avatar.stop();
         }
 
-        // Populate a single menu that contains all words.
-        function populateWordMenu() {
-            var select = document.getElementById("wordSelect");
-            if (!select) return;
-            select.innerHTML = "";
+        function populateCategoryMenu() {
+            const catSelect = document.getElementById('categorySelect');
+            const wordSelect = document.getElementById('wordSelect');
 
-            var defaultOption = document.createElement("option");
-            defaultOption.value = "";
-            defaultOption.text = "اختر كلمة";
-            select.appendChild(defaultOption);
+            catSelect.innerHTML = '';
+            const def = document.createElement('option');
+            def.value = '';
+            def.text = 'الفئة';
+            catSelect.appendChild(def);
 
-            words.sort().forEach(function (word) {
-                var option = document.createElement("option");
-                option.value = word;
-                option.text = word;
-                select.appendChild(option);
+            for (const cat in Avatar.dictionary) {
+                const option = document.createElement('option');
+                option.value = option.text = cat;
+                catSelect.appendChild(option);
+            }
+
+            wordSelect.innerHTML = '';
+            const wordDef = document.createElement('option');
+            wordDef.value = '';
+            wordDef.text = 'الكلمة';
+            wordSelect.appendChild(wordDef);
+        }
+
+        function onCategoryChange() {
+            const cat = document.getElementById('categorySelect').value;
+            const wordSelect = document.getElementById('wordSelect');
+            wordSelect.innerHTML = '';
+
+            const def = document.createElement('option');
+            def.value = '';
+            def.text = 'الكلمة';
+            wordSelect.appendChild(def);
+
+            if (!cat || !Avatar.dictionary[cat]) return;
+            Avatar.dictionary[cat].forEach(word => {
+                const option = document.createElement('option');
+                option.value = option.text = word;
+                wordSelect.appendChild(option);
             });
         }
 
-        // Add selected word to the text input sentence.
         function addSelectedWord() {
-            var glossInput = document.getElementById("glossInput");
-            var select = document.getElementById("wordSelect");
-            if (!select || !select.value) return;
-            glossInput.value = (glossInput.value + " " + select.value).trim();
-            select.selectedIndex = 0;
+            const glossInput = document.getElementById('glossInput');
+            const wordSelect = document.getElementById('wordSelect');
+            if (!wordSelect || !wordSelect.value) return;
+            glossInput.value = (glossInput.value + ' ' + wordSelect.value).trim();
+            wordSelect.selectedIndex = 0;
         }
-
     </script>
 </head>
 
 <body onload="CWASA.init();">
 
-    <div style="box-sizing: border-box; width: 100%; height: 100%; padding: 15px;">
-        <table align="center" style="width:100%; height:100%;">
-            <tr align="center" class="avatar-container">
-                <td width="100%" height="100%">
-                    <div class="CWASAAvatar av0" align="center" style="width: 100%; height: 100%;"></div>
-                </td>
-            </tr>
-            <tr class="controls-container">
-                <td align="center">
-                    <span class="CWASAAvMenu av0"></span>
-                    <!-- Add gloss input and button -->
-                    <input type="text" id="glossInput" placeholder="أدخل النص الذي ترغب في ترجمته" />
-                    <button onclick="playGloss()">Sign</button>
-                    <button onclick="resetGloss()">Reset</button>
-
-                    <select id="wordSelect"></select>
-                    <button onclick="addSelectedWord()">Add Selected Word</button>
-                </td>
-            </tr>
-        </table>
+    <div id="avatar-area">
+        <div class="CWASAAvatar av0"></div>
     </div>
+
+    <div id="controls">
+
+        <!-- Sign sentence panel -->
+        <div class="panel">
+            <span class="panel-label">الجملة</span>
+            <input type="text" id="glossInput" placeholder="اكتب الكلمات هنا أو أضفها من القاموس…" />
+            <div class="divider"></div>
+            <div id="sign-buttons" style="display:flex; gap:8px; flex-shrink:0;">
+                <button class="btn-primary" onclick="playGloss()">تشغيل</button>
+                <button class="btn-secondary" onclick="resetGloss()">مسح</button>
+            </div>
+            <span class="CWASAAvMenu av0"></span>
+        </div>
+
+        <!-- Dictionary picker panel -->
+        <div class="panel">
+            <span class="panel-label">القاموس</span>
+            <select id="categorySelect" onchange="onCategoryChange()"></select>
+            <span class="arrow">›</span>
+            <select id="wordSelect"></select>
+            <div class="divider"></div>
+            <button class="btn-secondary" onclick="addSelectedWord()">إضافة ↑</button>
+        </div>
+
+    </div>
+
 </body>
 </html>
- 
