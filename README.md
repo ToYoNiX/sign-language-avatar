@@ -271,7 +271,14 @@ poetry run python -m pytest -v
 │   ├── test_api.py
 │   ├── test_extractor.py
 │   └── extract_data_word_list.py
-├── sigml-reference.md            # SiGML format reference
+├── sigml-reference.md            # SiGML format reference — verified tokens, ordering rules, working number examples
+├── docs/                         # Reference documents for HamNoSys and the eSIGN editor
+│   ├── HamNoSysFonts.pdf         # Complete HamNoSys token list with Unicode code points
+│   ├── HNS-intro-guide.pdf       # HamNoSys introductory guide (handshapes, orientation, movement)
+│   ├── HNS4.1.pdf                # HamNoSys version 4.1 specification
+│   ├── eSIGN-D23rev2.pdf         # eSIGN editor user documentation (adding signs, exporting SiGML)
+│   ├── eSIGNApproach.pdf         # eSIGN project approach document
+│   └── An intro to eSignEditor and HNS.pdf  # Quick intro to the eSIGN editor and HamNoSys
 ├── CREDITS
 ├── .env                          # Local env vars (not committed)
 ├── .env.example                  # Env var template
@@ -295,6 +302,8 @@ The FastAPI dev server (`app.py`) serves `web-simulator/` directly with `follow_
 - [SiGML (Signing Gesture Markup Language)](https://vh.cmp.uea.ac.uk/index.php/SiGML)
 - [CWASA Signing Avatars](https://vh.cmp.uea.ac.uk/index.php/CWA_Signing_Avatars)
 - [DictaSign Project](https://www.sign-lang.uni-hamburg.de/dicta-sign/portal/concepts/concepts_fre.html)
+- [`sigml-reference.md`](sigml-reference.md) — verified SiGML token reference with working examples
+- [`docs/`](docs/) — local copies of the HamNoSys and eSIGN editor reference documents
 
 ## License
 
