@@ -26,10 +26,10 @@
                 if (ALLOWED_ORIGIN !== '*' && event.origin !== ALLOWED_ORIGIN) return;
                 const { type, ...payload } = event.data;
                 if (type === 'sign') {
-                    Avatar.sign(payload.text, {
-                        onSign:    (word, index, total) => postToParent({ type: 'signing', word, index, total }),
-                        onDone:    ()                   => postToParent({ type: 'done' }),
-                        onNoMatch: ()                   => postToParent({ type: 'error', reason: 'no matching words found' }),
+                    Avatar.signSiGML(payload.sigml, {
+                        onSign:  () => postToParent({ type: 'signing' }),
+                        onDone:  () => postToParent({ type: 'done' }),
+                        onError: (reason) => postToParent({ type: 'error', reason }),
                     });
                 } else if (type === 'stop') {
                     Avatar.stop();

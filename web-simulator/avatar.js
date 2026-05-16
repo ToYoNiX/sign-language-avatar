@@ -63,6 +63,19 @@ const Avatar = (() => {
         _playSequentially(glosses, 0, callbacks);
     }
 
+    function signSiGML(sigml, callbacks = {}) {
+        _stopRequested = false;
+        if (!sigml) {
+            if (callbacks.onError) callbacks.onError('no sigml provided');
+            return;
+        }
+        CWASA.playSiGMLText(sigml);
+        if (callbacks.onSign) callbacks.onSign();
+        _playingTimeout = setTimeout(() => {
+            if (!_stopRequested && callbacks.onDone) callbacks.onDone();
+        }, _config.signDuration || 1000);
+    }
+
     function stop() {
         _stopRequested = true;
         clearTimeout(_playingTimeout);
@@ -71,6 +84,7 @@ const Avatar = (() => {
     return {
         ready,
         sign,
+        signSiGML,
         stop,
         get config()     { return _config; },
         get dictionary() { return _dictionary; },
