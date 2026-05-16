@@ -1,245 +1,177 @@
 <!DOCTYPE html>
-<html>
+<html dir="rtl" lang="ar">
 <head>
     <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>3D ArSL Avatar</title>
-    <meta http-equiv="Access-Control-Allow-Origin" content="*">
-    <meta http-equiv="Access-Control-Allow-Methods" content="GET">
     <link rel="icon" type="image/svg+xml" href="favicon.svg" />
     <link rel="stylesheet" href="cwa/cwasa.css" />
     <script src="cwa/allcsa.js"></script>
     <script src="avatar.js"></script>
     <style>
-        * { box-sizing: border-box; }
+        *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
         body {
-            margin: 0;
-            padding: 12px;
-            height: 100vh;
+            font-family: system-ui, sans-serif;
+            background: #f5f5f5;
             display: flex;
             flex-direction: column;
-            font-family: sans-serif;
-            background: #f4f4f4;
+            height: 100vh;
+            overflow: hidden;
         }
 
-        #avatar-area {
+        /* ── Avatar ── */
+        #avatar-wrapper {
             flex: 1;
             min-height: 0;
             background: #fff;
-            border-radius: 8px;
-            overflow: hidden;
-            margin-bottom: 12px;
         }
 
         .CWASAAvatar { width: 100%; height: 100%; }
 
-        #controls {
+        /* ── Bottom panel ── */
+        #bottom-panel {
+            flex-shrink: 0;
+            display: flex;
+            height: 38vh;
+            min-height: 160px;
+            border-top: 1px solid #ddd;
+            background: #f9f9f9;
+            gap: 8px;
+            padding: 8px;
+        }
+
+        /* ── Shared list box ── */
+        .list-box {
             display: flex;
             flex-direction: column;
-            gap: 10px;
-        }
-
-        .panel {
+            border: 1px solid #ccc;
+            border-radius: 6px;
             background: #fff;
-            border-radius: 8px;
-            padding: 12px 16px;
-            display: flex;
-            align-items: center;
-            gap: 10px;
+            overflow: hidden;
         }
 
-        .panel-label {
-            font-size: 12px;
+        .list-box-label {
+            padding: 6px 10px;
+            font-size: 11px;
             font-weight: 600;
             color: #888;
-            text-transform: uppercase;
-            letter-spacing: 0.05em;
-            white-space: nowrap;
+            background: #f4f4f4;
+            border-bottom: 1px solid #ddd;
+            letter-spacing: 0.04em;
+            flex-shrink: 0;
         }
 
-        .panel-label::after {
-            content: '';
+        .list-box-scroll {
+            flex: 1;
+            overflow-y: auto;
+        }
+
+        .list-item {
             display: block;
-            width: 1px;
-            height: 20px;
-            background: #e0e0e0;
-            margin: 4px auto 0;
-        }
-
-        input[type="text"] {
-            flex: 1;
-            min-width: 0;
-            padding: 10px 12px;
-            border: 1px solid #ddd;
-            border-radius: 6px;
-            font-size: 15px;
-            direction: rtl;
-            outline: none;
-        }
-
-        input[type="text"]:focus { border-color: #4a9eff; }
-
-        select {
-            flex: 1;
-            min-width: 0;
-            padding: 10px;
-            border: 1px solid #ddd;
-            border-radius: 6px;
-            font-size: 14px;
-            background: #fafafa;
-            outline: none;
-            cursor: pointer;
-        }
-
-        select:focus { border-color: #4a9eff; }
-
-        button {
-            padding: 10px 18px;
+            width: 100%;
+            padding: 8px 12px;
             border: none;
-            border-radius: 6px;
+            border-bottom: 1px solid #f0f0f0;
+            background: none;
+            text-align: right;
             font-size: 14px;
-            font-weight: 500;
+            color: #222;
             cursor: pointer;
             white-space: nowrap;
-            min-height: 44px;
         }
 
-        .btn-primary { background: #4a9eff; color: #fff; }
-        .btn-primary:hover { background: #2a7fdf; }
+        .list-item:last-child { border-bottom: none; }
+        .list-item:hover { background: #e8f0fe; color: #1a5faa; }
 
-        .btn-secondary { background: #e8e8e8; color: #333; }
-        .btn-secondary:hover { background: #d4d4d4; }
-
-        .divider {
-            width: 1px;
-            height: 28px;
-            background: #e0e0e0;
-            flex-shrink: 0;
+        .list-item.selected {
+            background: #0078d4;
+            color: #fff;
         }
 
-        .arrow {
-            color: #bbb;
-            font-size: 16px;
-            flex-shrink: 0;
-        }
+        /* ── Sizing ── */
+        #cat-box  { width: 140px; flex-shrink: 0; }
+        #word-box { flex: 1; min-width: 0; }
 
-        /* ── Mobile ── */
-        @media (max-width: 600px) {
-            body { padding: 8px; gap: 8px; }
-
-            .panel { flex-wrap: wrap; gap: 8px; }
-
-            .panel-label { width: 100%; }
-            .panel-label::after { display: none; }
-
-            /* sentence panel: input full width, buttons share the row below */
-            #glossInput { width: 100%; }
-
-            #sign-buttons { display: contents; }
-
-            /* dictionary panel: both selects full width, button on its own row */
-            #categorySelect,
-            #wordSelect    { width: 100%; }
-
-            .arrow  { display: none; }
-            .divider { display: none; }
-        }
-    </style>
-    <script>
-        Avatar.ready.then(populateCategoryMenu);
-
-        function playGloss() {
-            Avatar.sign(document.getElementById('glossInput').value);
-        }
-
-        function resetGloss() {
-            document.getElementById('glossInput').value = '';
-            Avatar.stop();
-        }
-
-        function populateCategoryMenu() {
-            const catSelect = document.getElementById('categorySelect');
-            const wordSelect = document.getElementById('wordSelect');
-
-            catSelect.innerHTML = '';
-            const def = document.createElement('option');
-            def.value = '';
-            def.text = 'الفئة';
-            catSelect.appendChild(def);
-
-            for (const cat in Avatar.dictionary) {
-                const option = document.createElement('option');
-                option.value = option.text = cat;
-                catSelect.appendChild(option);
+        /* ── Mobile: stack vertically ── */
+        @media (max-width: 540px) {
+            #bottom-panel {
+                flex-direction: column;
+                height: 45vh;
             }
 
-            wordSelect.innerHTML = '';
-            const wordDef = document.createElement('option');
-            wordDef.value = '';
-            wordDef.text = 'الكلمة';
-            wordSelect.appendChild(wordDef);
+            #cat-box  { width: 100%; flex-shrink: 0; height: 38%; }
+            #word-box { flex: 1; }
         }
-
-        function onCategoryChange() {
-            const cat = document.getElementById('categorySelect').value;
-            const wordSelect = document.getElementById('wordSelect');
-            wordSelect.innerHTML = '';
-
-            const def = document.createElement('option');
-            def.value = '';
-            def.text = 'الكلمة';
-            wordSelect.appendChild(def);
-
-            if (!cat || !Avatar.dictionary[cat]) return;
-            Avatar.dictionary[cat].forEach(word => {
-                const option = document.createElement('option');
-                option.value = option.text = word;
-                wordSelect.appendChild(option);
-            });
-        }
-
-        function addSelectedWord() {
-            const glossInput = document.getElementById('glossInput');
-            const wordSelect = document.getElementById('wordSelect');
-            if (!wordSelect || !wordSelect.value) return;
-            glossInput.value = (glossInput.value + ' ' + wordSelect.value).trim();
-            wordSelect.selectedIndex = 0;
-        }
-    </script>
+    </style>
 </head>
 
 <body onload="CWASA.init();">
 
-    <div id="avatar-area">
+    <div id="avatar-wrapper">
         <div class="CWASAAvatar av0"></div>
     </div>
 
-    <div id="controls">
-
-        <!-- Sign sentence panel -->
-        <div class="panel">
-            <span class="panel-label">الجملة</span>
-            <input type="text" id="glossInput" placeholder="اكتب الكلمات هنا أو أضفها من القاموس…" />
-            <div class="divider"></div>
-            <div id="sign-buttons" style="display:flex; gap:8px; flex-shrink:0;">
-                <button class="btn-primary" onclick="playGloss()">تشغيل</button>
-                <button class="btn-secondary" onclick="resetGloss()">مسح</button>
-            </div>
-            <span class="CWASAAvMenu av0"></span>
+    <div id="bottom-panel">
+        <div id="word-box" class="list-box">
+            <div class="list-box-label">الكلمات</div>
+            <div class="list-box-scroll" id="word-list"></div>
         </div>
-
-        <!-- Dictionary picker panel -->
-        <div class="panel">
-            <span class="panel-label">القاموس</span>
-            <select id="categorySelect" onchange="onCategoryChange()"></select>
-            <span class="arrow">›</span>
-            <select id="wordSelect"></select>
-            <div class="divider"></div>
-            <button class="btn-secondary" onclick="addSelectedWord()">إضافة ↑</button>
+        <div id="cat-box" class="list-box">
+            <div class="list-box-label">الفئات</div>
+            <div class="list-box-scroll" id="cat-list"></div>
         </div>
-
     </div>
+
+    <script>
+        let activeCat = null;
+        let activeWord = null;
+
+        Avatar.ready.then(() => {
+            const catList = document.getElementById('cat-list');
+            const dict = Avatar.dictionary;
+            let firstEl = null;
+
+            for (const cat in dict) {
+                const btn = document.createElement('button');
+                btn.className = 'list-item';
+                btn.textContent = cat;
+                btn.onclick = () => selectCategory(cat, btn);
+                catList.appendChild(btn);
+                if (!firstEl) firstEl = { cat, btn };
+            }
+
+            if (firstEl) selectCategory(firstEl.cat, firstEl.btn);
+        });
+
+        function selectCategory(cat, btn) {
+            if (activeCat) activeCat.classList.remove('selected');
+            activeCat = btn;
+            btn.classList.add('selected');
+
+            const wordList = document.getElementById('word-list');
+            wordList.innerHTML = '';
+            activeWord = null;
+
+            Avatar.dictionary[cat].forEach(word => {
+                const wb = document.createElement('button');
+                wb.className = 'list-item';
+                wb.textContent = word;
+                wb.onclick = () => signWord(word, wb);
+                wordList.appendChild(wb);
+            });
+        }
+
+        function signWord(word, btn) {
+            if (activeWord) activeWord.classList.remove('selected');
+            activeWord = btn;
+            btn.classList.add('selected');
+            Avatar.stop();
+            Avatar.sign(word, {
+                onDone: () => btn.classList.remove('selected')
+            });
+        }
+    </script>
 
 </body>
 </html>
